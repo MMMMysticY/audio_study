@@ -1,0 +1,24 @@
+### IntelliJ IDEA ###
+*.idea
+*.iws
+*.iml
+*.ipr
+
+*/__pycache__
+
+
+### VS Code ###
+.vscode/
+
+.ipynb_checkpoints
+
+### too large data ###
+*.npy
+*.csv
+*.jpg
+*.zip
+*.rar
+*.mp4
+*.pkl
+*.txt
+*.mp3
