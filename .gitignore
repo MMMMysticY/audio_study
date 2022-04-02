@@ -23,3 +23,6 @@
 *.txt
 *.mp3
 *.wav
+*.gz
+*.pth
+*.bin
