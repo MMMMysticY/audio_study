@@ -16,6 +16,7 @@ def collect_audio_batch(batch, audio_transform, mode):
        e.g. [(file1,txt1),(file2,txt2),...] '''
 
     # Bucketed batch should be [[(file1,txt1),(file2,txt2),...]]
+    print('batch_shape_in_src/data: ', batch.shape)
     if type(batch[0]) is not tuple:
         batch = batch[0]
     # Make sure that batch size is reasonable
@@ -215,3 +216,6 @@ def repro_load_dataset(n_jobs, use_gpu, pin_memory, ascending, corpus, audio, te
     msg = 'I/O spec.  | Audio feature = {}\t| feature dim = {}\t| Token type = {}\t| Vocab size = {}'.format(
             audio['feat_type'], feat_dim, tokenizer.token_type, tokenizer.vocab_size)
     return dv_set, feat_dim, tokenizer.vocab_size, tokenizer, msg
+
+if __name__ == '__main__':
+    load_dataset(n_jobs = 4, use_gpu=True, pin_memory= True,)

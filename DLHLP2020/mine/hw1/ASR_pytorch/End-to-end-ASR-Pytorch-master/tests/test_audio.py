@@ -2,13 +2,13 @@ import unittest
 import numpy as np
 import torch
 
-from src import audio
+import audio
 
 
 class TestAudio(unittest.TestCase):
     def setUp(self):
         super(TestAudio, self).__init__()
-        self.filepath = "tests/sample_data/3830-12529-0005.wav"
+        self.filepath = "sample_data/3830-12529-0005.wav"
 
     def test_filter_bank(self):
         audio_config = {

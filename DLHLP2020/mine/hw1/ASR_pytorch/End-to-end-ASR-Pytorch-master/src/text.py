@@ -46,6 +46,7 @@ class _BaseTextEncoder(abc.ABC):
 
 
 class CharacterTextEncoder(_BaseTextEncoder):
+    # 以字符token的文本的encoder
     def __init__(self, vocab_list):
         # Note that vocab_list must not contain <pad>, <eos> and <unk>
         # <pad>=0, <eos>=1, <unk>=2
@@ -57,14 +58,18 @@ class CharacterTextEncoder(_BaseTextEncoder):
         s = s.strip("\r\n ")
         # Manually append eos to the end
         return [self.vocab_to_idx(v) for v in s] + [self.eos_idx]
+        # 通过vocab_to_idx将sub-word转化为int token表示 最后再加上eos
+
 
     def decode(self, idxs, ignore_repeat=False):
         vocabs = []
         for t, idx in enumerate(idxs):
             v = self.idx_to_vocab(idx)
             if idx == self.pad_idx or (ignore_repeat and t > 0 and idx == idxs[t-1]):
+                # 如果idx是pad或者去除repeat(这个应该是在CTC中使用)
                 continue
             elif idx == self.eos_idx:
+                # 到达eos 就停止
                 break
             else:
                 vocabs.append(v)
@@ -76,6 +81,7 @@ class CharacterTextEncoder(_BaseTextEncoder):
             # Do not strip space because character based text encoder should
             # have a space token
             vocab_list = [line.strip("\r\n") for line in f]
+            # 加载vocab_file
         return cls(vocab_list)
 
     @property
@@ -88,12 +94,15 @@ class CharacterTextEncoder(_BaseTextEncoder):
 
     def vocab_to_idx(self, vocab):
         return self._vocab2idx.get(vocab, self.unk_idx)
+    # 通过vocab2idx字典返回vocab的token数字表示 如果不在字典中就用unk_idx进行表示
 
     def idx_to_vocab(self, idx):
         return self._vocab_list[idx]
+    # 通过数组索引将idx转化为sub-word表示
 
 
 class SubwordTextEncoder(_BaseTextEncoder):
+    # 以subword作为token的文本encoder
     def __init__(self, spm):
         if spm.pad_id() != 0 or spm.eos_id() != 1 or spm.unk_id() != 2:
             raise ValueError(
@@ -103,6 +112,7 @@ class SubwordTextEncoder(_BaseTextEncoder):
 
     def encode(self, s):
         return self.spm.encode_as_ids(s)
+    # 直接使用sentencepiece model的encode_as_ids就可以直接将sub_word转化为int token
 
     def decode(self, idxs, ignore_repeat=False):
         crop_idx = []
@@ -110,6 +120,7 @@ class SubwordTextEncoder(_BaseTextEncoder):
             if idx == self.eos_idx:
                 break
             elif idx == self.pad_idx or (ignore_repeat and t > 0 and idx == idxs[t-1]):
+                # 如果idx是pad或者去除repeat(这个应该是在CTC中使用)
                 continue
             else:
                 crop_idx.append(idx)
@@ -133,6 +144,7 @@ class SubwordTextEncoder(_BaseTextEncoder):
 
 
 class WordTextEncoder(CharacterTextEncoder):
+    # 以word作为token的文本encoder
     def encode(self, s):
         # Always strip trailing space, \r and \n
         s = s.strip("\r\n ")
@@ -148,6 +160,7 @@ class WordTextEncoder(CharacterTextEncoder):
             if idx == self.eos_idx:
                 break
             elif idx == self.pad_idx or (ignore_repeat and t > 0 and idx == idxs[t-1]):
+                # 如果idx是pad或者去除repeat(这个应该是在CTC中使用)
                 continue
             else:
                 vocabs.append(v)
@@ -174,12 +187,14 @@ class BertTextEncoder(_BaseTextEncoder):
         # Reduce vocab size manually
         reduced_idx = []
         for idx in self._tokenizer.encode(s):
+            # 先进行encode
             try:
                 r_idx = idx-BERT_FIRST_IDX
                 assert r_idx > 0
                 reduced_idx.append(r_idx)
             except:
                 reduced_idx.append(self.unk_idx)
+            # 如果词汇在BERT_FIRST_IDX之前就是unk_idx否则就将token减去BERT_FIRST_IDX 缩小token的取值范围
         reduced_idx.append(self.eos_idx)
         return reduced_idx
 
@@ -193,6 +208,7 @@ class BertTextEncoder(_BaseTextEncoder):
             else:
                 # Shift to correct idx for bert tokenizer
                 crop_idx.append(idx+BERT_FIRST_IDX)
+                # 加上BERT_FIRST_IDX
         return self._tokenizer.decode(crop_idx)
 
     @property
@@ -205,7 +221,7 @@ class BertTextEncoder(_BaseTextEncoder):
 
     @classmethod
     def load_from_file(cls, vocab_file):
-        from pytorch_transformers import BertTokenizer
+        from transformers import BertTokenizer
         return cls(BertTokenizer.from_pretrained(vocab_file))
 
     @property

@@ -2,6 +2,8 @@ import argparse
 import logging
 from collections import Counter
 
+# 通过sentencepiece进行subword的处理
+# 理念其实是类似n-gram的 用出现频率多个几个组成搭配的概念
 
 def main(args):
 
@@ -16,12 +18,14 @@ def main(args):
                "--eos_piece=<eos> --remove_extra_whitespaces=true".format(
                    args.input_file, args.output_file,
                    args.vocab_size, args.character_coverage))
+        # 使用sentencepiece进行处理sub-word
 
         splib.SentencePieceTrainer.Train(cmd)
     else:
         with open(args.input_file, "r") as f:
             lines = [line.strip("\r\n ") for line in f]
         counter = Counter()
+        # 使用计数方式处理sub-word
         if args.mode == "word":
             for line in lines:
                 counter.update(line.split())
@@ -29,11 +33,13 @@ def main(args):
             # Only selected top `vocab_size` vocabularies
             vocab_list = sorted(
                 counter.keys(), key=lambda k: counter[k], reverse=True)[:args.vocab_size]
+            # vocab_list使用word出现的频率进行排序 只保存排序最高vocab_size的word
         elif args.mode == "character":
             for line in lines:
                 counter.update(line)
             # In character mode, vocab_list is sorted in alphabetical order
             vocab_list = sorted(counter)
+            # character模式使用字母顺序排序 同样是使用计数方式进行
 
         logging.info("Collected totally {} vocabularies.".format(len(counter)))
         logging.info("Selected {} vocabularies.".format(len(vocab_list)))
